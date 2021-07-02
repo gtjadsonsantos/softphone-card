@@ -6,5 +6,5 @@
 <h1 align="center">Softphone Card</h1>
 
 <p align="center" style="display: flex; flex-direction: row; align-content: center; justify-content: center; ">
-  <img width="460" height="300"  src="https://github.com/jadson179/softphone-card/raw/main/images/Keyboard_Phone.png">
+  <img width="363" height="458"  src="https://github.com/jadson179/softphone-card/raw/main/images/Keyboard_Phone.png">
 </p>
