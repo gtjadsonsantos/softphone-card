@@ -1,34 +1,39 @@
-import {LitElement, html } from 'lit';
+import {LitElement, html,css } from 'lit';
 import {customElement, property} from 'lit/decorators.js';
+import { HomeAssistant } from 'custom-card-helpers';
 
-import {globalCSS} from "./styles"
+import "./views/configuration-phone"
 
 @customElement('softphone-card')
 export class SoftphoneCard extends LitElement {
-  static styles = globalCSS
 
-  @property()
-  name = 'Worldd';
+  @property() private _hass?: HomeAssistant;
 
-  @property({type: Number})
-  count = 0;
+
+  set hass(hass: HomeAssistant) {
+    this._hass = hass;
+  }
 
   render() {
     return html`
-      <h1>Hello, ${this.name}!</h1>
-      <button @click=${this._onClick} part="button">
-        Click Count: ${this.count}
-      </button>
-      <slot></slot>
+     <configuration-phone .hass=${this._hass} />
+
+     </configuration-phone>
     `;
   }
 
-  private _onClick() {
-    this.count++;
-  }
 
-  foo(): string {
-    return 'foo';
-  }
+  static styles = css`
+  :host {
+      display: block;
+      max-width: 450px;
+      height: 520px ;
+      display: flex;
+      flex-direction: column;
+      
+      justify-content: center;
+    }
+  `;
+
 }
 
