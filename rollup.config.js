@@ -1,38 +1,42 @@
-/**
- * @license
- * Copyright 2018 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */
+import typescript from 'rollup-plugin-typescript2';
+import commonjs from 'rollup-plugin-commonjs';
+import nodeResolve from 'rollup-plugin-node-resolve';
+import babel from 'rollup-plugin-babel';
+import { terser } from 'rollup-plugin-terser';
+import serve from 'rollup-plugin-serve';
+import json from '@rollup/plugin-json';
 
-import summary from 'rollup-plugin-summary';
-import {terser} from 'rollup-plugin-terser';
-import resolve from '@rollup/plugin-node-resolve';
-import replace from '@rollup/plugin-replace';
+const dev = process.env.ROLLUP_WATCH;
 
-export default {
-  input: 'my-element.js',
-  output: {
-    file: 'my-element.bundled.js',
-    format: 'esm',
+const serveopts = {
+  contentBase: ['./dist'],
+  host: '0.0.0.0',
+  port: 5000,
+  allowCrossOrigin: true,
+  headers: {
+    'Access-Control-Allow-Origin': '*',
   },
-  onwarn(warning) {
-    if (warning.code !== 'THIS_IS_UNDEFINED') {
-      console.error(`(!) ${warning.message}`);
-    }
-  },
-  plugins: [
-    replace({'Reflect.decorate': 'undefined'}),
-    resolve(),
-    terser({
-      ecma: 2017,
-      module: true,
-      warnings: true,
-      mangle: {
-        properties: {
-          regex: /^__/,
-        },
-      },
-    }),
-    summary(),
-  ],
 };
+
+const plugins = [
+  nodeResolve({}),
+  commonjs(),
+  typescript(),
+  json(),
+  babel({
+    exclude: 'node_modules/**',
+  }),
+  dev && serve(serveopts),
+  !dev && terser(),
+];
+
+export default [
+  {
+    input: 'src/softphone-card.ts',
+    output: {
+      dir: 'dist',
+      format: 'es',
+    },
+    plugins: [...plugins],
+  },
+];
