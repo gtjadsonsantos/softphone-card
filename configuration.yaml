@@ -1,0 +1,7 @@
+default_config:
+
+lovelace:
+  mode: yaml
+  resources:
+    - url: /local/softphone-card.js
+      type: module

@@ -1,0 +1,11 @@
+title: Softphone Card
+views:
+    # View tab title.
+  - title: Example
+    cards:
+      - type: custom:softphone-card
+        name: "Jadson Santos"
+        password: "4078"
+        username: "4078"
+        sipServer: "192.168.0.33"
+        wss: "wss://192.168.0.33:8089/ws"
