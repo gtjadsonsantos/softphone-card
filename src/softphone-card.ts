@@ -41,7 +41,11 @@ export class SoftphoneCard extends LitElement {
 
   private addDigit(e: Event): void {
     const type = (e.target as HTMLButtonElement).value
-    this.destination.concat(type)
+    this.destination = this.destination.concat(type)
+  }
+
+  private backSpace(): void {
+    this.destination = this.destination.substr(0,this.destination.length -  1) 
   }
   
   private updateInputDestination(e: Event): void {
@@ -58,13 +62,13 @@ export class SoftphoneCard extends LitElement {
         class="input-number" 
         label="Destino" 
         .value=${this.destination} 
-        
+
         @value-changed=${this.updateInputDestination}
         >
         ${this.destination}  
       </paper-input>
 
-      <ha-icon-button icon="mdi:backspace"> </ha-icon-button>
+      <ha-icon-button icon="mdi:backspace" @click=${this.backSpace} > </ha-icon-button>
       </div>
       <div class="card-content" >
         <div class="row">
