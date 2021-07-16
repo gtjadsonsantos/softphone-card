@@ -3,6 +3,11 @@ import { LitElement, html, css, property, CSSResult, TemplateResult, customEleme
 
 import { DefaultCardConfig } from './const';
 import { CardConfig } from './types';
+import { Web } from "sip.js";
+import { getAudioElement } from './helpers';
+
+
+
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).customCards = (window as any).customCards || [];
@@ -26,19 +31,35 @@ export class SoftphoneCard extends LitElement {
   @property({ type: Object }) private config: CardConfig = DefaultCardConfig;
   @property({type: String}) private destination = "";
 
-
+  @property({type: Object}) private options: Web.SimpleUserOptions | undefined ;
+  @property({type: Object}) private simpleUser: Web.SimpleUser | undefined ;
+  
+  
   set hass(hass: HomeAssistant) {
     this._hass = hass;
   }
-
+  
   setConfig(userConfig: Partial<CardConfig>): void {
     const config: CardConfig = {
       ...DefaultCardConfig,
       ...userConfig,
     };
+    
     this.config = config;
+    
+    this.options = {
+      aor: `sip:${config.username}@${config.sipServer}`, // caller
+      media: {
+        constraints: { audio: true, video: false }, // audio only call
+        remote: { audio: getAudioElement("remoteAudio") } // play remote audio
+      }
+    };
+    
+    this.simpleUser = new Web.SimpleUser(this.config.wss, this.options);
+    
   }
-
+  
+  
   private addDigit(e: Event): void {
     const type = (e.target as HTMLButtonElement).value
     this.destination = this.destination.concat(type)
@@ -95,9 +116,22 @@ export class SoftphoneCard extends LitElement {
       </div>
 
       <div class="card-actions" >
-        <mwc-button>Ligar</mwc-button>
+        <mwc-button
+        
+        @click=${()=> {
+
+          this.simpleUser?.connect()
+          .then(() => this.simpleUser?.call(`sip:${this.destination}@${this.config.sipServer}`))
+          .catch((error: Error) => {
+            console.error(error)
+          });
+
+        }}
+        
+        >Ligar</mwc-button>
       </div>
       </ha-card>
+    
     `;
   }
 
