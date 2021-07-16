@@ -48,14 +48,23 @@ export class SoftphoneCard extends LitElement {
     this.config = config;
     
     this.options = {
-      aor: `sip:${config.username}@${config.sipServer}`, // caller
+      aor: `sip:${config.username}:${config.password}@${config.sipServer}`, // caller
       media: {
         constraints: { audio: true, video: false }, // audio only call
         remote: { audio: getAudioElement("remoteAudio") } // play remote audio
+      },
+      userAgentOptions: {
+        authorizationPassword: config.password,
+        authorizationUsername: config.username
       }
     };
     
     this.simpleUser = new Web.SimpleUser(this.config.wss, this.options);
+    this.simpleUser.connect()
+    .then(()=> this.simpleUser?.register())
+
+
+
     
   }
   
@@ -120,8 +129,8 @@ export class SoftphoneCard extends LitElement {
         
         @click=${()=> {
 
-          this.simpleUser?.connect()
-          .then(() => this.simpleUser?.call(`sip:${this.destination}@${this.config.sipServer}`))
+      
+          this.simpleUser?.call(`sip:${this.destination}@${this.config.sipServer}`)
           .catch((error: Error) => {
             console.error(error)
           });
