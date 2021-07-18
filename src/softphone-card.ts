@@ -3,11 +3,9 @@ import { LitElement, html, css, property, CSSResult, TemplateResult, customEleme
 
 import { DefaultCardConfig } from './const';
 import { CardConfig } from './types';
-import { Web } from "sip.js";
+import {  Web } from 'sip.js';
 import { getAudioElement } from './helpers';
-
-
-
+import { SimpleUserDelegate } from 'sip.js/lib/platform/web';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).customCards = (window as any).customCards || [];
@@ -26,63 +24,58 @@ console.info(
 
 @customElement('softphone-card')
 export class SoftphoneCard extends LitElement {
-
   @property({ type: Object }) private _hass?: HomeAssistant;
   @property({ type: Object }) private config: CardConfig = DefaultCardConfig;
-  @property({type: String}) private destination = "";
+  @property({ type: String }) private destination = '';
 
-  @property({type: Object}) private options: Web.SimpleUserOptions | undefined ;
-  @property({type: Object}) private simpleUser: Web.SimpleUser | undefined ;
-  
-  
+  @property({ type: Object }) private options: Web.SimpleUserOptions | undefined;
+  @property({ type: Object }) private simpleUser: Web.SimpleUser | undefined;
+
   set hass(hass: HomeAssistant) {
     this._hass = hass;
   }
-  
-  setConfig(userConfig: Partial<CardConfig>): void {
+
+  async setConfig(userConfig: Partial<CardConfig>): Promise<void> {
     const config: CardConfig = {
       ...DefaultCardConfig,
       ...userConfig,
     };
-    
+
     this.config = config;
-    
+
+
+  
     this.options = {
-      aor: `sip:${config.username}:${config.password}@${config.sipServer}`, // caller
+      aor: `sip:${config.username}@${config.sipServer}`,
       media: {
-        constraints: { audio: true, video: false }, // audio only call
-        remote: { audio: getAudioElement("remoteAudio") } // play remote audio
+        constraints: { audio: true, video: false },
+        remote: { audio: getAudioElement('remoteAudio') },
       },
       userAgentOptions: {
         authorizationPassword: config.password,
         authorizationUsername: config.username
-      }
+      },
     };
-    
+
     this.simpleUser = new Web.SimpleUser(this.config.wss, this.options);
-    this.simpleUser.connect()
-    .then(()=> this.simpleUser?.register())
 
-
-
-    
+    await this.simpleUser.connect();
+    await this.simpleUser.register();    
   }
-  
-  
+
   private addDigit(e: Event): void {
-    const type = (e.target as HTMLButtonElement).value
-    this.destination = this.destination.concat(type)
+    const type = (e.target as HTMLButtonElement).value;
+    this.destination = this.destination.concat(type);
   }
 
   private backSpace(): void {
-    this.destination = this.destination.substr(0,this.destination.length -  1) 
+    this.destination = this.destination.substr(0, this.destination.length - 1);
   }
-  
+
   private updateInputDestination(e: Event): void {
     const type = (e.target as HTMLInputElement).value;
     this.destination = type;
   }
-
 
   render(): TemplateResult {
     return html`
@@ -127,17 +120,17 @@ export class SoftphoneCard extends LitElement {
       <div class="card-actions" >
         <mwc-button
         
-        @click=${()=> {
+        @click=${async () => {
+          await this.simpleUser
+            ?.call(`sip:${this.destination}@${this.config.sipServer}`)
 
-      
-          this.simpleUser?.call(`sip:${this.destination}@${this.config.sipServer}`)
-          .catch((error: Error) => {
-            console.error(error)
-          });
-
+            .catch((error: Error) => {
+              console.error(error);
+            });
         }}
         
         >Ligar</mwc-button>
+        <span>${this.simpleUser?.isConnected()? "Conectado":"Desconectado" }</span>
       </div>
       </ha-card>
     
@@ -150,50 +143,52 @@ export class SoftphoneCard extends LitElement {
 
   static get styles(): CSSResult {
     return css`
-    :host {
-      max-width: 492.03px;
-      height: 500.63px;
-      width: 100%;
-      border-radius: 1em;
-    }
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-    }
-    .card-header > .input-number {
-      width: 100%;
-      border: none;
-    }
-    .card-content {
-      padding: 16px;
-    }
-    .row {
-      width: 100%;
-      display: flex;
-      height: 70px;
-      justify-content: space-evenly;
-    }
-    .key {
-      width: 80px;
-      height: 40px;
-      background-color: rgb(138 180 248);
-      color : #fff ;
-      border: none;
-      border-radius: 0.3em;
-      color: white;
-      text-align: center;
-      text-decoration: none;
-      font-weight: bold;
-      display: inline-block;
-      font-size: 16px;
-      cursor: pointer
-    }
+      :host { 
+        max-width: 492.03px;
+        height: 500.63px;
+        width: 100%;
+        border-radius: 1em;
+      }
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+      }
+      .card-header > .input-number {
+        width: 100%;
+        border: none;
+      }
+      .card-content {
+        padding: 16px;
+      }
+      .row {
+        width: 100%;
+        display: flex;
+        height: 70px;
+        justify-content: space-evenly;
+      }
+      .key {
+        width: 80px;
+        height: 40px;
+        background-color: rgb(138 180 248);
+        color: #fff;
+        border: none;
+        border-radius: 0.3em;
+        color: white;
+        text-align: center;
+        text-decoration: none;
+        font-weight: bold;
+        display: inline-block;
+        font-size: 16px;
+        cursor: pointer;
+      }
 
-    .card-actions {
-      border-top: 1px solid var(--divider-color, #e8e8e8);
-      padding: 5px 16px;
-    }
-
+      .card-actions {
+        border-top: 1px solid var(--divider-color, #e8e8e8);
+        padding: 5px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center
+      }
     `;
   }
 }
