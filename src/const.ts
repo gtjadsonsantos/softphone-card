@@ -10,3 +10,9 @@ export const DefaultCardConfig: CardConfig = {
     wss: ""
 };
   
+export enum Delegate {
+    onCallReceived = "onCallReceived",
+    onCallHangup = "onCallHangup",
+    onCallAnswered = "onCallAnswered",
+    onCall= "onCall"
+}

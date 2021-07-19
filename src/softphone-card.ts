@@ -1,11 +1,10 @@
 import { HomeAssistant } from 'custom-card-helpers';
 import { LitElement, html, css, property, CSSResult, TemplateResult, customElement } from 'lit-element';
 
-import { DefaultCardConfig } from './const';
+import { DefaultCardConfig, Delegate } from './const';
 import { CardConfig } from './types';
 import {  Web } from 'sip.js';
 import { getAudioElement } from './helpers';
-import { SimpleUserDelegate } from 'sip.js/lib/platform/web';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).customCards = (window as any).customCards || [];
@@ -31,6 +30,11 @@ export class SoftphoneCard extends LitElement {
   @property({ type: Object }) private options: Web.SimpleUserOptions | undefined;
   @property({ type: Object }) private simpleUser: Web.SimpleUser | undefined;
 
+  @property({ type: String }) private delegate: Delegate = Delegate.onCall;
+  @property({ type: String }) private textButtonPhone = "Ligar";
+
+  
+
   set hass(hass: HomeAssistant) {
     this._hass = hass;
   }
@@ -42,8 +46,6 @@ export class SoftphoneCard extends LitElement {
     };
 
     this.config = config;
-
-
   
     this.options = {
       aor: `sip:${config.username}@${config.sipServer}`,
@@ -61,6 +63,25 @@ export class SoftphoneCard extends LitElement {
 
     await this.simpleUser.connect();
     await this.simpleUser.register();    
+
+    this.simpleUser.delegate = {
+
+      onCallReceived: (): void => {
+        this.textButtonPhone = "Atender"
+        this.delegate = Delegate.onCallReceived
+      },
+      onCallAnswered: (): void => {
+        this.textButtonPhone = "Encerrar"
+        this.delegate = Delegate.onCallAnswered
+      },
+      onCallHangup: (): void => {
+        this.textButtonPhone = "Ligar"
+        this.delegate = Delegate.onCall
+
+      }
+      
+    } 
+
   }
 
   private addDigit(e: Event): void {
@@ -75,6 +96,23 @@ export class SoftphoneCard extends LitElement {
   private updateInputDestination(e: Event): void {
     const type = (e.target as HTMLInputElement).value;
     this.destination = type;
+  }
+
+  private async handlerPhoneAction(delegate: Delegate): Promise<void> {
+    switch (delegate) {
+      case Delegate.onCallReceived:
+        await this.simpleUser?.answer()
+        break;
+      case Delegate.onCallAnswered:
+        await this.simpleUser?.hangup()
+        break;
+        case Delegate.onCall:
+          await this.simpleUser?.call(`sip:${this.destination}@${this.config.sipServer}`)
+          break;
+      default:
+        this.textButtonPhone = "Ligar"
+        break;
+    }
   }
 
   render(): TemplateResult {
@@ -118,22 +156,27 @@ export class SoftphoneCard extends LitElement {
       </div>
 
       <div class="card-actions" >
+        <div>
         <mwc-button
-        
-        @click=${async () => {
-          await this.simpleUser
-            ?.call(`sip:${this.destination}@${this.config.sipServer}`)
+        @click=${
+          
+          async () => {
 
-            .catch((error: Error) => {
-              console.error(error);
-            });
+          //await this.simpleUser?.call(`sip:${this.destination}@${this.config.sipServer}`)
+          //  .catch((error: Error) => {
+          //    console.error(error);
+          //  });
+         
+          await this.handlerPhoneAction(this.delegate)
+
         }}
         
-        >Ligar</mwc-button>
+        >${this.textButtonPhone}</mwc-button>
+
+        </div>
         <span>${this.simpleUser?.isConnected()? "Conectado":"Desconectado" }</span>
       </div>
       </ha-card>
-    
     `;
   }
 
