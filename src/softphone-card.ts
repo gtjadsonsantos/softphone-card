@@ -1,7 +1,7 @@
 import { HomeAssistant } from 'custom-card-helpers';
 import { LitElement, html, css, property, CSSResult, TemplateResult, customElement } from 'lit-element';
 
-import { DefaultCardConfig, Delegate } from './const';
+import { DefaultCardConfig, Delegate,SOUNDS_URL } from './const';
 import { CardConfig } from './types';
 import {  Web } from 'sip.js';
 import { getAudioElement } from './helpers';
@@ -77,7 +77,6 @@ export class SoftphoneCard extends LitElement {
       onCallHangup: (): void => {
         this.textButtonPhone = "Ligar"
         this.delegate = Delegate.onCall
-
       }
       
     } 
@@ -87,6 +86,9 @@ export class SoftphoneCard extends LitElement {
   private addDigit(e: Event): void {
     const type = (e.target as HTMLButtonElement).value;
     this.destination = this.destination.concat(type);
+    SOUNDS_URL.dtmf().play()
+    if ( this.delegate == Delegate.onCallAnswered ) this.simpleUser?.sendDTMF(type)
+
   }
 
   private backSpace(): void {
