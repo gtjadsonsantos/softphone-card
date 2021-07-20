@@ -1,9 +1,9 @@
 import { HomeAssistant } from 'custom-card-helpers';
 import { LitElement, html, css, property, CSSResult, TemplateResult, customElement } from 'lit-element';
 
-import { DefaultCardConfig, Delegate,SOUNDS_URL } from './const';
+import { DefaultCardConfig, Delegate, SOUNDS_URL } from './const';
 import { CardConfig } from './types';
-import {  Web } from 'sip.js';
+import { Web } from 'sip.js';
 import { getAudioElement } from './helpers';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -31,9 +31,7 @@ export class SoftphoneCard extends LitElement {
   @property({ type: Object }) private simpleUser: Web.SimpleUser | undefined;
 
   @property({ type: String }) private delegate: Delegate = Delegate.onCall;
-  @property({ type: String }) private textButtonPhone = "Ligar";
-
-  
+  @property({ type: String }) private textButtonPhone = 'Ligar';
 
   set hass(hass: HomeAssistant) {
     this._hass = hass;
@@ -46,7 +44,7 @@ export class SoftphoneCard extends LitElement {
     };
 
     this.config = config;
-  
+
     this.options = {
       aor: `sip:${config.username}@${config.sipServer}`,
       media: {
@@ -55,40 +53,38 @@ export class SoftphoneCard extends LitElement {
       },
       userAgentOptions: {
         authorizationPassword: config.password,
-        authorizationUsername: config.username
+        authorizationUsername: config.username,
       },
     };
 
     this.simpleUser = new Web.SimpleUser(this.config.wss, this.options);
 
     await this.simpleUser.connect();
-    await this.simpleUser.register();    
+    await this.simpleUser.register();
 
     this.simpleUser.delegate = {
-
       onCallReceived: (): void => {
-        this.textButtonPhone = "Atender"
-        this.delegate = Delegate.onCallReceived
+        this.textButtonPhone = 'Atender';
+        this.delegate = Delegate.onCallReceived;        
+        
+        SOUNDS_URL.ringtone().play()  
       },
       onCallAnswered: (): void => {
-        this.textButtonPhone = "Encerrar"
-        this.delegate = Delegate.onCallAnswered
+        this.textButtonPhone = 'Encerrar';
+        this.delegate = Delegate.onCallAnswered;
       },
       onCallHangup: (): void => {
-        this.textButtonPhone = "Ligar"
-        this.delegate = Delegate.onCall
+        this.textButtonPhone = 'Ligar';
+        this.delegate = Delegate.onCall;
       }
-      
-    } 
-
+    };
   }
 
   private addDigit(e: Event): void {
     const type = (e.target as HTMLButtonElement).value;
     this.destination = this.destination.concat(type);
-    SOUNDS_URL.dtmf().play()
-    if ( this.delegate == Delegate.onCallAnswered ) this.simpleUser?.sendDTMF(type)
-
+    SOUNDS_URL.dtmf().play();
+    if (this.delegate == Delegate.onCallAnswered) this.simpleUser?.sendDTMF(type);
   }
 
   private backSpace(): void {
@@ -103,16 +99,16 @@ export class SoftphoneCard extends LitElement {
   private async handlerPhoneAction(delegate: Delegate): Promise<void> {
     switch (delegate) {
       case Delegate.onCallReceived:
-        await this.simpleUser?.answer()
+        await this.simpleUser?.answer();
         break;
       case Delegate.onCallAnswered:
-        await this.simpleUser?.hangup()
+        await this.simpleUser?.hangup();
         break;
-        case Delegate.onCall:
-          await this.simpleUser?.call(`sip:${this.destination}@${this.config.sipServer}`)
-          break;
+      case Delegate.onCall:
+        await this.simpleUser?.call(`sip:${this.destination}@${this.config.sipServer}`);
+        break;
       default:
-        this.textButtonPhone = "Ligar"
+        this.textButtonPhone = 'Ligar';
         break;
     }
   }
@@ -160,23 +156,14 @@ export class SoftphoneCard extends LitElement {
       <div class="card-actions" >
         <div>
         <mwc-button
-        @click=${
-          
-          async () => {
-
-          //await this.simpleUser?.call(`sip:${this.destination}@${this.config.sipServer}`)
-          //  .catch((error: Error) => {
-          //    console.error(error);
-          //  });
-         
-          await this.handlerPhoneAction(this.delegate)
-
+        @click=${async (): Promise<void> => {
+          await this.handlerPhoneAction(this.delegate);
         }}
         
         >${this.textButtonPhone}</mwc-button>
 
         </div>
-        <span>${this.simpleUser?.isConnected()? "Conectado":"Desconectado" }</span>
+        <span>${this.simpleUser?.isConnected() ? 'Conectado' : 'Desconectado'}</span>
       </div>
       </ha-card>
     `;
@@ -188,7 +175,7 @@ export class SoftphoneCard extends LitElement {
 
   static get styles(): CSSResult {
     return css`
-      :host { 
+      :host {
         max-width: 492.03px;
         height: 500.63px;
         width: 100%;
@@ -232,7 +219,7 @@ export class SoftphoneCard extends LitElement {
         padding: 5px 16px;
         display: flex;
         justify-content: space-between;
-        align-items: center
+        align-items: center;
       }
     `;
   }
